@@ -1,0 +1,93 @@
+<?php
+
+/**
+ * Implements hook_services_resources
+ * 
+ * Resources for Services module.
+ */
+function services_og_services_resources() {
+  $services = array();
+
+  if (!module_exists('og')) {
+    return array();
+  }
+  
+  // GET
+  // Headers: Content-Type: application/x-www-form-urlencoded
+  // Example: GET http://localhost/drupal/endpoint/user/{uid}/groups
+  $services['user']['relationships'] = array(
+    'groups' => array(
+      'file' => array('type' => 'inc', 'module' => 'services_og', 'name' => 'resources/group_user_resource'),
+      'help' => 'Get groups of a user.',
+      'callback' => '_group_user_resource_getGroupsOfUser',
+      'access callback' => '_group_user_resource_access',
+      'access arguments' => array('getGroupsOfUser'),
+      'access arguments append' => TRUE,
+      'args' => array(
+        // TODO: Role:
+        array(
+          'name' => 'role',
+          'type' => 'string',
+          'description' => 'Filter groups based on role in group.',
+          'source' => 'data',
+          'optional' => TRUE,
+        ),
+      ),
+    ),
+  );
+  
+  $services['node']['relationships'] = array(
+    // Reverse lookup, finds content with audience field of GROUP
+    // GET http://localhost/drupal/endpoint/node/{group_nid}/group_content
+    // Gets content associated with this group
+    'group_content' => array(
+      'file' => array('type' => 'inc', 'module' => 'services_og', 'name' => 'resources/group_resource'),
+      'help' => 'Get a list of nodes owned by this group.',
+      'callback' => '_group_resource_get_content_of_group',
+      'access callback' => '_group_resource_access',
+      'access arguments' => array('getContentRelatingToGroup'),
+      'access arguments append' => TRUE,
+      'args' => array(
+        array(
+          'name' => 'type',
+          'type' => 'string',
+          'description' => 'Filter related content on node type.',
+          'source' => array('param' => 'type'),
+          'default value' => '*',
+          'optional' => TRUE,
+        ),
+        array(
+          'name' => 'exclusive',
+          'type' => 'int',
+          'description' => 'Only get content that has this group exclusivly as group owner.',
+          'source' => array('param' => 'exclusive'),
+          'default value' => 0,
+          'optional' => TRUE,
+        ),
+      ),
+    ),
+    // get groups associated with this content.
+    // Example: GET http://localhost/drupal/endpoint/node/{group_content_nid}/audience
+    //'groups' is a better name than 'audience', but 'audience' is technically more appropriate.
+    'audience' => array(
+      'file' => array('type' => 'inc', 'module' => 'services_og', 'name' => 'resources/group_resource'),
+      'help' => 'Get a list of groups associated with this group content.',
+      'callback' => '_group_resource_get_group_of_content',
+      'access callback' => '_group_resource_access',
+      'access arguments' => array('getGroupRelatingToContent'),
+      'access arguments append' => TRUE,
+      'args' => array(
+        array(
+          'name' => 'type',
+          'type' => 'string',
+          'description' => 'Filter related groups on node type.',
+          'source' => array('param' => 'type'),
+          'default value' => '*',
+          'optional' => TRUE,
+        ),
+      ),
+    ),
+  );
+  
+  return $services;
+}
