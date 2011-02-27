@@ -1,5 +1,6 @@
 name = Services OG
 description = Provides resources for Services that implement functionality provided by Organic Groups.
 core = 7.x
-package = services
-package = og
+package = Services
+dependencies[] = services
+dependencies[] = og
